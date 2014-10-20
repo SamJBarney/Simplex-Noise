@@ -6,6 +6,8 @@
 -define(G3, 1.0/6.0).
 
 
+% Moved setup of the permutation tables into a separate function that needs to be called before ever using the noise function.
+% This way the tables don't need to be recalculated each time the noise function is called
 setup() ->
         P = [151,160,137,91,90,15,
   131,13,201,95,96,53,194,233,7,225,140,36,103,30,69,142,8,99,37,240,21,10,23,
@@ -26,17 +28,6 @@ setup() ->
 	put(perm,Perm),
 	put(permMod, PermMod12),
 	ok.
-
-dot({GX, GY, GZ}, X, Y, Z) ->
-	GX*X + GY*Y + GZ*Z.
-
-floor(X) ->
-    T = erlang:trunc(X),
-    case (X - T) of
-        Neg when Neg < 0 -> T - 1;
-        Pos when Pos > 0 -> T;
-        _ -> T
-    end.
 
 noise(Xin, Yin, Zin) ->
 	% Setup
@@ -151,13 +142,18 @@ noise(Xin, Yin, Zin) ->
 
 	32.0 * (N0+N1+N2+N3).
 
+dot({GX, GY, GZ}, X, Y, Z) ->
+	GX*X + GY*Y + GZ*Z.
+
+floor(X) ->
+    T = erlang:trunc(X),
+    case (X - T) of
+        Neg when Neg < 0 -> T - 1;
+        Pos when Pos > 0 -> T;
+        _ -> T
+    end.
+
 getPerm(0, [H|_]) -> H;
-getPerm(Left,[]) -> 
-	Overflow = get(max_overflow),
-	if
-		Overflow == undefined orelse Overflow < Left -> put(max_overflow,Left);
-		true -> ok
-	end,
-	0;
+getPerm(Left,[]) ->
 getPerm(Index, [_|T]) -> 
 	getPerm(Index - 1, T).
